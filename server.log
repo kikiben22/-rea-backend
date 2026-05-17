@@ -1,0 +1,39 @@
+✅ MongoDB Atlas connecté
+🔄 Simulateur de vitaux démarré
+🏥 Serveur REA démarré → http://localhost:5001
+👤 Client connecté: IiJUW0upN9E2oxDCAAAB
+[Ollama] Modele llama3.2:1b charge en memoire
+[Ollama] Modele llama3.2:1b charge en memoire
+[0mPOST /api/auth/login [32m200[0m 2451.534 ms - 429[0m
+[0mPOST /api/chatbot/ask [32m200[0m 341.901 ms - 684[0m
+[0mPOST /api/chatbot/ask [32m200[0m 128.537 ms - 1320[0m
+[0mPOST /api/chatbot/ask [32m200[0m 101.377 ms - 615[0m
+[0mPOST /api/chatbot/ask [32m200[0m 109.450 ms - 243[0m
+[0mPOST /api/auth/login [32m200[0m 365.326 ms - 429[0m
+[0mPOST /api/chatbot/ask [32m200[0m 53.088 ms - 684[0m
+[0mPOST /api/chatbot/ask [32m200[0m 50.597 ms - 293[0m
+[0mPOST /api/chatbot/ask [32m200[0m 59.540 ms - 615[0m
+[0mGET /api/patients?limit=50 [32m200[0m 200.008 ms - 9233[0m
+[0mGET /api/patients?limit=50 [36m304[0m 194.701 ms - -[0m
+[0mGET /favicon.ico [33m404[0m 1.666 ms - 150[0m
+[0mGET /favicon.ico [33m404[0m 0.853 ms - 150[0m
+[0mPOST /api/chatbot/stream [32m200[0m 50.767 ms - -[0m
+[0mGET /api/patients?limit=50 [32m200[0m 209.103 ms - 9235[0m
+[0mGET /api/patients?limit=50 [36m304[0m 193.498 ms - -[0m
+[0mGET /api/stock [36m304[0m 275.366 ms - -[0m
+[0mGET /api/stock [36m304[0m 344.216 ms - -[0m
+[0mGET /api/stock [36m304[0m 252.755 ms - -[0m
+[0mGET /api/stock [36m304[0m 252.619 ms - -[0m
+[0mGET /api/patients?limit=200 [32m200[0m 940.557 ms - 9231[0m
+[0mGET /api/patients?limit=200 [32m200[0m 988.022 ms - 9229[0m
+[0mGET /api/prescriptions/patient/69d03ff2d35a3c02a038176f [36m304[0m 102.712 ms - -[0m
+[0mGET /api/patients/69d03ff2d35a3c02a038176f [32m200[0m 827.322 ms - 2748[0m
+[0mPOST /api/chatbot/stream [32m200[0m 47.963 ms - -[0m
+👤 Client déconnecté: IiJUW0upN9E2oxDCAAAB
+👤 Client connecté: h498urtnIqhbgUtrAAAD
+👤 Client déconnecté: h498urtnIqhbgUtrAAAD
+👤 Client connecté: S69CXybKLOWwmEMhAAAF
+[0mGET /api/patients?limit=50 [32m200[0m 350.207 ms - 9233[0m
+[0mGET /api/patients?limit=50 [36m304[0m 323.094 ms - -[0m
+[0mPOST /api/chatbot/stream [32m200[0m 57.327 ms - -[0m
+👤 Client déconnecté: S69CXybKLOWwmEMhAAAF

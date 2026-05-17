@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>📿 Bracelet Test — REA Monitor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0e1a;
+      color: #e8edf5;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #00bfff;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #8a9bbf;
+      font-size: 0.78rem;
+      margin-bottom: 20px;
+    }
+
+    /* ── Status ── */
+    .status-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: 1.5px solid;
+    }
+    .badge-online  { color: #00ff88; border-color: #00ff88; background: #00ff8812; }
+    .badge-offline { color: #4a5a7a; border-color: #4a5a7a; background: #4a5a7a12; }
+    .badge-alert   { color: #ff3838; border-color: #ff3838; background: #ff383812; }
+    .badge-ok      { color: #00bfff; border-color: #00bfff; background: #00bfff12; }
+
+    /* ── Config ── */
+    .card {
+      background: #131d35;
+      border: 1.5px solid #1e2d4a;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #8a9bbf;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #0f1629;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      color: #e8edf5;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: #00bfff; }
+
+    label { font-size: 0.78rem; color: #8a9bbf; display: block; margin-bottom: 4px; }
+
+    /* ── Boutons ── */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-bottom: 10px;
+    }
+    .btn:active { opacity: 0.75; }
+    .btn-primary { background: #00bfff; color: #0a0e1a; }
+    .btn-stop    { background: #1e2d4a; color: #8a9bbf; }
+    .btn-test    { background: #ff3838; color: #fff; }
+
+    /* ── Accéléromètre en temps réel ── */
+    .accel-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .accel-axis {
+      background: #0f1629;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .axis-label { font-size: 0.65rem; color: #8a9bbf; letter-spacing: 1px; margin-bottom: 4px; }
+    .axis-value { font-size: 1.1rem; font-weight: 700; font-family: monospace; color: #00bfff; }
+
+    /* ── Magnitude ── */
+    .magnitude-wrap { margin-bottom: 10px; }
+    .magnitude-label {
+      font-size: 0.72rem; color: #8a9bbf;
+      display: flex; justify-content: space-between; margin-bottom: 6px;
+    }
+    .progress-bar {
+      height: 8px; background: #1e2d4a; border-radius: 4px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 4px;
+      transition: width 0.1s, background 0.2s;
+      background: #00ff88;
+    }
+
+    /* ── État machine ── */
+    .state-display {
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .state-idle        { background: #1e2d4a; color: #8a9bbf; }
+    .state-freefall    { background: #ffa50220; color: #ffa502; border: 1px solid #ffa50260; }
+    .state-waiting     { background: #ff6b3520; color: #ff6b35; border: 1px solid #ff6b3560; }
+    .state-fall        { background: #ff383820; color: #ff3838; border: 1px solid #ff383860; animation: pulse 0.5s infinite alternate; }
+
+    @keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
+
+    /* ── Log ── */
+    .log-box {
+      background: #050810;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      padding: 10px;
+      height: 180px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.72rem;
+    }
+    .log-entry { margin-bottom: 4px; line-height: 1.4; }
+    .log-info  { color: #8a9bbf; }
+    .log-warn  { color: #ffa502; }
+    .log-alert { color: #ff3838; font-weight: 700; }
+    .log-ok    { color: #00ff88; }
+
+    /* ── Alerte overlay ── */
+    #fall-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: #ff383890;
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+    }
+    #fall-overlay.show { display: flex; }
+    .overlay-icon { font-size: 5rem; margin-bottom: 16px; }
+    .overlay-title { font-size: 1.8rem; font-weight: 900; color: #fff; letter-spacing: 3px; margin-bottom: 10px; }
+    .overlay-sub   { font-size: 1rem; color: #ffcccc; margin-bottom: 24px; }
+    .btn-dismiss   {
+      background: #fff; color: #ff3838; border: none;
+      padding: 14px 30px; border-radius: 10px;
+      font-size: 1rem; font-weight: 800; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📿 BRACELET TEST</h1>
+  <p class="subtitle">Votre téléphone = ESP32 + MPU6050</p>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <span class="badge badge-offline" id="badge-sensor">⚪ Capteur OFF</span>
+    <span class="badge badge-offline" id="badge-server">⚪ Serveur</span>
+    <span class="badge badge-ok"      id="badge-state">IDLE</span>
+  </div>
+
+  <!-- Config serveur -->
+  <div class="card">
+    <div class="card-title">⚙️ Configuration</div>
+    <label>IP du serveur REA Monitor</label>
+    <input type="text" id="server-ip" placeholder="192.168.1.100" value="">
+    <label>ID Patient (optionnel)</label>
+    <input type="text" id="patient-id" placeholder="laisser vide si non jumelé">
+    <label>ID Bracelet (votre téléphone)</label>
+    <input type="text" id="device-id" value="PHONE-TEST-001" readonly style="color:#8a9bbf">
+  </div>
+
+  <!-- Seuils -->
+  <div class="card">
+    <div class="card-title">🎯 Seuils de détection</div>
+    <label>Seuil chute libre (g) — défaut: 0.5</label>
+    <input type="number" id="thresh-freefall" value="0.5" step="0.05" min="0.1" max="1.0">
+    <label>Seuil impact (g) — défaut: 2.5</label>
+    <input type="number" id="thresh-impact" value="2.5" step="0.1" min="1.0" max="8.0">
+  </div>
+
+  <!-- Démarrer / Arrêter -->
+  <button class="btn btn-primary" id="btn-start" onclick="startSensor()">
+    ▶ DÉMARRER LA SURVEILLANCE
+  </button>
+  <button class="btn btn-stop"    id="btn-stop"  onclick="stopSensor()" style="display:none">
+    ⏹ ARRÊTER
+  </button>
+  <button class="btn btn-test" onclick="simulateFall()">
+    🧪 SIMULER UNE CHUTE (TEST)
+  </button>
+
+  <!-- Données accéléromètre -->
+  <div class="card" id="card-accel" style="display:none">
+    <div class="card-title">📡 Accéléromètre temps réel</div>
+
+    <div class="accel-display">
+      <div class="accel-axis">
+        <div class="axis-label">AX (g)</div>
+        <div class="axis-value" id="val-ax">0.00</div>
+      </div>
+      <div class="accel-axis">
+        <div class="axis-label">AY (g)</div>
+        <div class="axis-value" id="val-ay">0.00</div>
+      </div>
+      <div class="accel-axis">
+        <div class="axis-label">AZ (g)</div>
+        <div class="axis-value" id="val-az">0.00</div>
+      </div>
+    </div>
+
+    <div class="magnitude-wrap">
+      <div class="magnitude-label">
+        <span>Magnitude totale</span>
+        <span id="val-mag">0.00 g</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="mag-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="state-display state-idle" id="state-box">
+      SURVEILLANCE ACTIVE — EN ATTENTE
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="card">
+    <div class="card-title">📋 Journal</div>
+    <div class="log-box" id="log"></div>
+  </div>
+
+  <!-- Overlay alerte chute -->
+  <div id="fall-overlay">
+    <div class="overlay-icon">🚨</div>
+    <div class="overlay-title">CHUTE DÉTECTÉE</div>
+    <div class="overlay-sub" id="overlay-msg">Alerte envoyée au dashboard ICU</div>
+    <button class="btn-dismiss" onclick="dismissOverlay()">ACQUITTER</button>
+  </div>
+
+<script>
+// ─── Configuration ─────────────────────────────────────────────────────────
+let serverIP    = '';
+let patientId   = '';
+let deviceId    = 'PHONE-TEST-001';
+let threshFF    = 0.50;   // chute libre (g)
+let threshImpact = 2.50;  // impact (g)
+const FF_MIN_MS  = 80;
+const FALL_WIN_MS = 1500;
+const COOLDOWN_MS = 8000;
+
+// ─── État machine ──────────────────────────────────────────────────────────
+const STATE = { IDLE: 'IDLE', FREE_FALL: 'FREE_FALL', WAITING: 'WAITING' };
+let currentState  = STATE.IDLE;
+let ffStart       = 0;
+let ffEnd         = 0;
+let lastFall      = 0;
+let isRunning     = false;
+let registered    = false;
+
+// ─── Démarrer le capteur ───────────────────────────────────────────────────
+function startSensor() {
+  serverIP    = document.getElementById('server-ip').value.trim() || location.hostname;
+  patientId   = document.getElementById('patient-id').value.trim();
+  deviceId    = document.getElementById('device-id').value.trim();
+  threshFF    = parseFloat(document.getElementById('thresh-freefall').value) || 0.5;
+  threshImpact = parseFloat(document.getElementById('thresh-impact').value) || 2.5;
+
+  // iOS 13+ nécessite une permission explicite pour DeviceMotionEvent
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission()
+      .then(state => {
+        if (state === 'granted') { attachSensor(); }
+        else { log('❌ Permission refusée par iOS', 'alert'); }
+      })
+      .catch(e => log('❌ Erreur permission: ' + e, 'alert'));
+  } else if (window.DeviceMotionEvent) {
+    attachSensor();
+  } else {
+    log('❌ Accéléromètre non supporté sur cet appareil', 'alert');
+    return;
+  }
+}
+
+function attachSensor() {
+  isRunning = true;
+  window.addEventListener('devicemotion', onMotion, true);
+
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display  = 'block';
+  document.getElementById('card-accel').style.display = 'block';
+  document.getElementById('badge-sensor').className  = 'badge badge-online';
+  document.getElementById('badge-sensor').textContent = '● Capteur ON';
+
+  log('✅ Capteur accéléromètre démarré', 'ok');
+  log(`🎯 Seuils: chute libre < ${threshFF}g | impact > ${threshImpact}g`, 'info');
+
+  // Enregistrement sur le serveur
+  registerDevice();
+}
+
+function stopSensor() {
+  isRunning = false;
+  window.removeEventListener('devicemotion', onMotion, true);
+
+  document.getElementById('btn-start').style.display = 'block';
+  document.getElementById('btn-stop').style.display  = 'none';
+  document.getElementById('badge-sensor').className  = 'badge badge-offline';
+  document.getElementById('badge-sensor').textContent = '⚪ Capteur OFF';
+
+  setState(STATE.IDLE);
+  log('⏹ Surveillance arrêtée', 'warn');
+}
+
+// ─── Lecture accéléromètre ─────────────────────────────────────────────────
+function onMotion(event) {
+  if (!isRunning) return;
+
+  // DeviceMotionEvent donne l'accélération en m/s²
+  // On divise par 9.81 pour avoir des g
+  const acc = event.accelerationIncludingGravity;
+  if (!acc) return;
+
+  const ax = (acc.x || 0) / 9.81;
+  const ay = (acc.y || 0) / 9.81;
+  const az = (acc.z || 0) / 9.81;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+
+  // Affichage
+  document.getElementById('val-ax').textContent = ax.toFixed(2);
+  document.getElementById('val-ay').textContent = ay.toFixed(2);
+  document.getElementById('val-az').textContent = az.toFixed(2);
+  document.getElementById('val-mag').textContent = mag.toFixed(2) + ' g';
+
+  // Barre de progression (0–5g max)
+  const pct = Math.min(mag / 5.0 * 100, 100);
+  const bar = document.getElementById('mag-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = mag > threshImpact ? '#ff3838'
+                        : mag < threshFF    ? '#ffa502'
+                        : '#00ff88';
+
+  // Machine à états
+  detectFall(ax, ay, az, mag);
+}
+
+// ─── Machine à états — Détection de chute ─────────────────────────────────
+function detectFall(ax, ay, az, mag) {
+  const now = Date.now();
+
+  switch (currentState) {
+    case STATE.IDLE:
+      if (mag < threshFF) {
+        currentState = STATE.FREE_FALL;
+        ffStart = now;
+        setState(STATE.FREE_FALL);
+        log(`⚠ Chute libre détectée (${mag.toFixed(2)}g)`, 'warn');
+      }
+      break;
+
+    case STATE.FREE_FALL:
+      if (mag >= threshFF) {
+        ffEnd = now;
+        const dur = ffEnd - ffStart;
+        if (dur >= FF_MIN_MS) {
+          currentState = STATE.WAITING;
+          setState(STATE.WAITING);
+          log(`⚠ Chute libre valide (${dur}ms) — attente impact`, 'warn');
+        } else {
+          currentState = STATE.IDLE;
+          setState(STATE.IDLE);
+        }
+      } else if (now - ffStart > 3000) {
+        currentState = STATE.IDLE;
+        setState(STATE.IDLE);
+      }
+      break;
+
+    case STATE.WAITING:
+      if (mag > threshImpact) {
+        const delay = now - ffEnd;
+        if (delay <= FALL_WIN_MS) {
+          onFallDetected(ax, ay, az, mag);
+        }
+        currentState = STATE.IDLE;
+        setState(STATE.IDLE);
+      } else if (now - ffEnd > FALL_WIN_MS) {
+        currentState = STATE.IDLE;
+        setState(STATE.IDLE);
+        log('ℹ Pas d\'impact — faux positif ignoré', 'info');
+      }
+      break;
+  }
+}
+
+// ─── Chute confirmée ───────────────────────────────────────────────────────
+function onFallDetected(ax, ay, az, mag) {
+  const now = Date.now();
+  if (now - lastFall < COOLDOWN_MS) {
+    log('ℹ Cooldown — alerte ignorée', 'info');
+    return;
+  }
+  lastFall = now;
+
+  log(`🚨 CHUTE CONFIRMÉE ! Impact: ${mag.toFixed(2)}g`, 'alert');
+
+  // Vibration SOS sur le téléphone
+  if (navigator.vibrate) {
+    navigator.vibrate([200,80,200,80,200, 300,100,400,100,400,100,400, 200,80,200,80,200]);
+  }
+
+  // Alerte vocale
+  speak(`Alerte chute détectée ! Impact ${mag.toFixed(1)} g. Vérifiez le patient.`);
+
+  // Overlay rouge
+  document.getElementById('overlay-msg').textContent =
+    `Impact : ${mag.toFixed(2)}g — Alerte envoyée au dashboard`;
+  document.getElementById('fall-overlay').classList.add('show');
+
+  // Envoyer au serveur
+  sendFallAlert(ax, ay, az, mag);
+}
+
+// ─── Simuler une chute (bouton test) ──────────────────────────────────────
+function simulateFall() {
+  log('🧪 SIMULATION de chute déclenchée manuellement', 'warn');
+  onFallDetected(0.1, -0.3, 3.5, 3.5);
+}
+
+// ─── Synthèse vocale ───────────────────────────────────────────────────────
+function speak(msg) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(msg);
+  u.lang   = 'fr-FR';
+  u.rate   = 1.0;
+  u.volume = 1.0;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+// ─── HTTP — Enregistrement ─────────────────────────────────────────────────
+async function registerDevice() {
+  try {
+    const res = await fetch(`http://${serverIP}:5001/api/bracelet/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deviceId,
+        patientId: patientId || undefined,
+        firmware: 'phone-1.0',
+        battery: getBatteryLevel()
+      })
+    });
+    if (res.ok) {
+      registered = true;
+      document.getElementById('badge-server').className  = 'badge badge-online';
+      document.getElementById('badge-server').textContent = `● ${serverIP}`;
+      log(`✅ Enregistré sur ${serverIP}:5001`, 'ok');
+    }
+  } catch(e) {
+    document.getElementById('badge-server').textContent = '⭕ Serveur injoignable';
+    log(`❌ Serveur inaccessible: ${serverIP}:5001`, 'alert');
+    log('  → Vérifiez que le PC et le téléphone sont sur le même WiFi', 'warn');
+  }
+}
+
+// ─── HTTP — Alerte chute ───────────────────────────────────────────────────
+async function sendFallAlert(ax, ay, az, mag) {
+  try {
+    const res = await fetch(`http://${serverIP}:5001/api/bracelet/fall`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deviceId,
+        patientId: patientId || undefined,
+        magnitude: mag.toFixed(2),
+        ax: ax.toFixed(3),
+        ay: ay.toFixed(3),
+        az: az.toFixed(3),
+        battery: getBatteryLevel()
+      })
+    });
+    if (res.ok) {
+      log('✅ Alerte envoyée au dashboard ICU !', 'ok');
+    } else {
+      log(`⚠ Serveur: HTTP ${res.status}`, 'warn');
+    }
+  } catch(e) {
+    log('❌ Impossible d\'envoyer l\'alerte — mode offline', 'alert');
+  }
+}
+
+// ─── Batterie (si API disponible) ─────────────────────────────────────────
+function getBatteryLevel() {
+  return 100; // l'API Battery est dépréciée sur la plupart des navigateurs
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────
+function setState(s) {
+  const box = document.getElementById('state-box');
+  const badge = document.getElementById('badge-state');
+  box.className = 'state-display';
+  if (s === STATE.IDLE)      { box.classList.add('state-idle');     box.textContent = '✅ SURVEILLANCE — EN ATTENTE'; badge.textContent = 'IDLE'; }
+  if (s === STATE.FREE_FALL) { box.classList.add('state-freefall'); box.textContent = '⚠ CHUTE LIBRE DÉTECTÉE...';   badge.textContent = 'CHUTE LIBRE'; }
+  if (s === STATE.WAITING)   { box.classList.add('state-waiting');  box.textContent = '⚡ ATTENTE DE L\'IMPACT...';   badge.textContent = 'IMPACT ?'; }
+  if (s === 'FALL')          { box.classList.add('state-fall');     box.textContent = '🚨 CHUTE CONFIRMÉE !';         badge.textContent = 'ALERTE'; }
+}
+
+function dismissOverlay() {
+  document.getElementById('fall-overlay').classList.remove('show');
+  window.speechSynthesis?.cancel();
+}
+
+function log(msg, type = 'info') {
+  const box = document.getElementById('log');
+  const t = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const div = document.createElement('div');
+  div.className = `log-entry log-${type}`;
+  div.textContent = `[${t}] ${msg}`;
+  box.prepend(div);
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  // Pré-remplir l'IP du serveur (même hôte que la page)
+  document.getElementById('server-ip').value = location.hostname || '192.168.1.100';
+  log('📿 Bracelet Test prêt — Appuyez sur DÉMARRER', 'info');
+  log('💡 Conseil : agitez brusquement le téléphone puis stoppez net', 'info');
+});
+</script>
+</body>
+</html>

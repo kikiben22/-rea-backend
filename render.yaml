@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: rea-monitor-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: MONGODB_URI
+        value: mongodb+srv://ICU_db_user:w3aS3scvhFcQVchh@cluster0.x4m7axc.mongodb.net/rea_system
+      - key: JWT_SECRET
+        value: rea_jwt_secret_2024_production
+      - key: DEVICE_API_KEY
+        value: REA2024
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
