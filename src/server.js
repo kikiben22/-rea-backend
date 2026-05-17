@@ -87,9 +87,18 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '20mb' }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
 
-// ── Téléchargement APK en réseau local (sans internet) ───────────────────
+// ── Téléchargement APK (local + cloud Render) ────────────────────────────
 const DOWNLOADS_DIR = path.join(__dirname, '../../downloads');
+const PUBLIC_DIR    = path.join(__dirname, '../public');
 app.use('/download', express.static(DOWNLOADS_DIR));
+app.use('/public',   express.static(PUBLIC_DIR));
+// Raccourci direct pour l'APK Android
+app.get('/apk', (req, res) => {
+  const f = require('fs');
+  const publicApk = path.join(PUBLIC_DIR, 'rea-monitor.apk');
+  if (f.existsSync(publicApk)) return res.download(publicApk, 'rea-monitor.apk');
+  res.status(404).json({ message: 'APK non trouvé' });
+});
 app.get('/api/download-info', (req, res) => {
   const PORT = process.env.PORT || 5001;
   const ip   = getLanIP();
