@@ -1,4 +1,7 @@
 require('dotenv').config();
+const dns = require('dns');
+const { Resolver } = require('dns').promises;
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 const express = require('express');
 const http    = require('http');
 const { Server } = require('socket.io');
@@ -92,6 +95,10 @@ const DOWNLOADS_DIR = path.join(__dirname, '../../downloads');
 const PUBLIC_DIR    = path.join(__dirname, '../public');
 app.use('/download', express.static(DOWNLOADS_DIR));
 app.use('/public',   express.static(PUBLIC_DIR));
+// Page de téléchargement avec QR code
+app.get('/download-app', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'download.html'));
+});
 // Raccourci direct pour l'APK Android
 app.get('/apk', (req, res) => {
   const f = require('fs');
@@ -156,21 +163,66 @@ app.get('/api/health', (req, res) => {
 
 
 
+// ── Résolution SRV Atlas via Google DNS (contourne les DNS FAI bloquants) ──
+async function resolveAtlasSrv(srvUri) {
+  const match = srvUri.match(/^mongodb\+srv:\/\/([^:@]+):([^@]+)@([^/?]+)(\/[^?]*)?(\?.*)?$/);
+  if (!match) return srvUri;
+  const [, user, pass, host, dbPath, query] = match;
+  const resolver = new Resolver();
+  resolver.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+  try {
+    const srvRecords = await resolver.resolveSrv(`_mongodb._tcp.${host}`);
+    let txtOpts = '';
+    try {
+      const txt = await resolver.resolveTxt(host);
+      txtOpts = txt.flat().join('&');
+    } catch (_) {}
+    const hosts = srvRecords.map(r => `${r.name}:${r.port}`).join(',');
+    const db = dbPath || '/rea_system';
+    const params = new URLSearchParams(txtOpts);
+    if (!params.has('ssl'))        params.set('ssl', 'true');
+    if (!params.has('authSource')) params.set('authSource', 'admin');
+    if (!params.has('tls'))        params.set('tls', 'true');
+    const directUri = `mongodb://${user}:${pass}@${hosts}${db}?${params.toString()}`;
+    console.log(`[DNS] SRV résolu via Google DNS → ${srvRecords.length} hôte(s)`);
+    return directUri;
+  } catch (err) {
+    console.warn('[DNS] Résolution SRV échouée, utilisation URI originale:', err.message);
+    return srvUri;
+  }
+}
+
 // ── Connexion MongoDB Atlas ───────────────────────────────────────────────
 async function startServer() {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/rea_system';
-  const isAtlas  = mongoUri.includes('mongodb+srv://') || mongoUri.includes('mongodb.net');
+  let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/rea_system';
+  const isAtlas = mongoUri.includes('mongodb+srv://') || mongoUri.includes('mongodb.net');
+
+  if (mongoUri.includes('mongodb+srv://')) {
+    mongoUri = await resolveAtlasSrv(mongoUri);
+  }
 
   try {
     await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 20000,
+      serverSelectionTimeoutMS: 30000,
       ...(isAtlas ? { retryWrites: true, w: 'majority', tls: true } : {}),
     });
     console.log(`✅ MongoDB ${isAtlas ? 'Atlas (cloud)' : 'local'} connecté`);
   } catch (err) {
-    console.error('❌ MongoDB Atlas échoué:', err.message.slice(0, 100));
-    console.error('   → Ajoutez 105.98.212.100 sur Atlas (Security → Network Access)');
-    console.log('⚠️  Démarrage sans base de données — certaines routes indisponibles');
+    console.error('❌ MongoDB Atlas échoué:', err.message.slice(0, 120));
+    if (isAtlas) {
+      console.log('🔄 Tentative connexion MongoDB local (fallback)...');
+      try {
+        await mongoose.connect('mongodb://localhost:27017/rea_system', {
+          serverSelectionTimeoutMS: 5000,
+        });
+        console.log('✅ MongoDB local connecté (mode hors-ligne)');
+      } catch (localErr) {
+        console.error('❌ MongoDB local aussi échoué:', localErr.message.slice(0, 80));
+        console.log('⚠️  Démarrage sans base de données — certaines routes indisponibles');
+      }
+    } else {
+      console.log('⚠️  Démarrage sans base de données — certaines routes indisponibles');
+    }
   }
 
   // Seed si base vide

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REA Monitor — Télécharger l'application</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a0e1a;
+      color: #e8edf5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #0f1629;
+      border: 1px solid #1e2d45;
+      border-radius: 20px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .logo { font-size: 32px; font-weight: 900; letter-spacing: 4px; margin-bottom: 4px; }
+    .logo span { color: #00bfff; }
+    .subtitle { color: #8a9bbf; font-size: 13px; margin-bottom: 30px; }
+    .qr-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      display: inline-block;
+      margin-bottom: 28px;
+    }
+    #qrcode { display: flex; justify-content: center; }
+    .hint { color: #8a9bbf; font-size: 13px; margin-bottom: 28px; line-height: 1.6; }
+    .btn {
+      display: block;
+      background: #0066ff;
+      color: #fff;
+      text-decoration: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #0052cc; }
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid #1e2d45;
+      color: #8a9bbf;
+      font-size: 13px;
+      padding: 12px;
+    }
+    .steps {
+      text-align: left;
+      background: #131d35;
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 24px;
+    }
+    .steps h3 { font-size: 13px; color: #00bfff; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .step-num {
+      background: #0066ff; color: #fff;
+      border-radius: 50%; width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 1px;
+    }
+    .step p { font-size: 13px; color: #ccd6f6; line-height: 1.5; }
+    .badge {
+      display: inline-block;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid rgba(0,255,136,0.3);
+      color: #00ff88;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">REA<span>MONITOR</span></div>
+    <div class="subtitle">Système Intelligent de Réanimation</div>
+    <div class="badge">Android — Version 1.0</div>
+
+    <div class="qr-container">
+      <div id="qrcode"></div>
+    </div>
+
+    <p class="hint">Scannez le QR code avec l'appareil photo<br>ou cliquez le bouton ci-dessous</p>
+
+    <a id="download-btn" class="btn" href="/apk" download="rea-monitor.apk">
+      ⬇ Télécharger l'APK Android
+    </a>
+    <a class="btn secondary" href="/api/health" target="_blank">
+      Vérifier l'état du serveur
+    </a>
+
+    <div class="steps">
+      <h3>Comment installer</h3>
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Téléchargez l'APK et ouvrez le fichier</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Autorisez l'installation depuis "Sources inconnues" si demandé</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>Installez et ouvrez REA Monitor</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>Le serveur est configuré automatiquement</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const APK_URL = window.location.origin + '/apk';
+    new QRCode(document.getElementById('qrcode'), {
+      text: APK_URL,
+      width: 220,
+      height: 220,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    document.getElementById('download-btn').href = APK_URL;
+  </script>
+</body>
+</html>

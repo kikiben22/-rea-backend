@@ -1,8 +1,9 @@
 FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 COPY src/ ./src/
 COPY public/ ./public/
-EXPOSE 5000
+RUN mkdir -p ./downloads
+EXPOSE 10000
 CMD ["node", "src/server.js"]
